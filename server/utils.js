@@ -89,4 +89,5 @@ const updateBookedSeats = async () => {
   }
 };
 
+batchImport()
 updateBookedSeats();
