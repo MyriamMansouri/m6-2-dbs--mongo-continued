@@ -43,7 +43,7 @@ const randomlyBookSeats = (num) => {
 
 // ----------------------------------
 
-DB_NAME = "concordia";
+const DB_NAME = "concordia";
 
 const options = {
   useNewUrlParser: true,
