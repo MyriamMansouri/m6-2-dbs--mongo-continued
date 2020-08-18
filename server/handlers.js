@@ -42,13 +42,16 @@ const getSeats = async (req, res) => {
     });
   } catch (err) {
     console.log(err.stack);
+    return res.status(500).json({
+      message: "An unknown error has occurred. Please reload the page",
+    });
   }
 };
 
 const bookSeat = async (req, res) => {
   let lastBookingAttemptSucceeded = false;
-  const { seatId, creditCard, expiration } = req.body;
-
+  const { seatId, creditCard, expiration, fullName, email } = req.body;
+  console.log(req.body);
   if (!creditCard || !expiration) {
     return res.status(400).json({
       status: 400,
@@ -74,24 +77,41 @@ const bookSeat = async (req, res) => {
     if (!state.seats[seatId].isBooked) {
       await db
         .collection("seats")
-        .updateOne({ _id: seatId }, { $set: {isBooked: true} });
+        .updateOne({ _id: seatId }, { $set: { isBooked: true } });
 
+      const user = await db.collection("users").findOne({ email });
+
+      if (user) {
+        const response = await db
+          .collection("users")
+          .updateOne({ email }, { $set: { seat: seatId } });
+        assert.equal(1, response.modifiedCount, "Seat already booked");
+      } else {
+        const response =  await db
+          .collection("users")
+          .insertOne({ fullName, email, seat: seatId });
+        assert.equal(
+          1,
+          response.insertedCount,
+          "User couldn't be added to database"
+        );
+      }
       res.status(200).json({
         status: 200,
         success: true,
       });
-
     } else {
-
       res.status(400).json({
         message: "This seat has already been booked!",
       });
-
     }
 
     client.close();
   } catch (err) {
-      console.log(err.stack)
+    console.log(err.stack);
+    res.status(400).json({
+      message: "An unknown error has occurred. Please try your request again.",
+    });
   }
   return;
 };
